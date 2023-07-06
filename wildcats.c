@@ -6,7 +6,7 @@
 /*   By: enoviell <enoviell@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/13 09:28:11 by rbordin           #+#    #+#             */
-/*   Updated: 2023/07/06 12:04:26 by enoviell         ###   ########.fr       */
+/*   Updated: 2023/07/06 15:40:03 by enoviell         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,6 +78,20 @@ static void control(char c, t_args *node)
 	node->argument = ft_strdup(temp);
 }
 
+static int	my_strchr(const char *s, int c)
+{
+	int				i;
+	unsigned char	d;
+
+	i = 0;
+	d = c;
+	while (s[i] != '\0' && s[i] != d)
+		i++;
+	if (s[i] == '\0' && d != '\0')
+		return (-1);
+	return (i);
+}
+
 static char **wildone(t_shell *mini, t_args *node)
 {
     DIR				*dir;
@@ -121,10 +135,16 @@ static char **wildone(t_shell *mini, t_args *node)
 					j++;
 				while (node->argument[i] != '\0' && test->d_name[j] != '\0')
 				{
-					if (node->argument[i] == test->d_name[j]) 
+					if (node->argument[i] == test->d_name[j] && j != 0) 
 					{
 						i++;
 						j++;
+					}
+					else if (node->argument[i] == '*')
+					{
+						i++;
+						while(node->argument[i] != test->d_name[j] && test->d_name[j] != '\0')
+							j++;
 					}
 					else
 					{
@@ -140,7 +160,8 @@ static char **wildone(t_shell *mini, t_args *node)
 				if (flag = 1)
 					break;
 			}
-			i++;
+			if (node->argument[i] != '*')
+				i++;
 		}
 		test = readdir(dir);
 	}
@@ -151,19 +172,6 @@ static char **wildone(t_shell *mini, t_args *node)
 	return (temp);
 }
 
-static int	my_strchr(const char *s, int c)
-{
-	int				i;
-	unsigned char	d;
-
-	i = 0;
-	d = c;
-	while (s[i] != '\0' && s[i] != d)
-		i++;
-	if (s[i] == '\0' && d != '\0')
-		return (-1);
-	return (i);
-}
 
 void    wild(t_shell *mini, t_args **node)
 {
