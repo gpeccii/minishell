@@ -6,7 +6,7 @@
 /*   By: enoviell <enoviell@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/13 09:28:11 by rbordin           #+#    #+#             */
-/*   Updated: 2023/07/05 17:50:36 by enoviell         ###   ########.fr       */
+/*   Updated: 2023/07/06 12:04:26 by enoviell         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,6 @@ static void	**case_one(struct dirent *test, DIR *dir, char **temp)
 	{
 		if (ft_strncmp(test->d_name, ".", 1) != 0 && ft_strncmp(test->d_name, "..", 2) != 0)
 		{
-			printf("test->d_name = %s\n", test->d_name);
 			temp[k] = ft_strdup(test->d_name);
 			k++;
 		}
@@ -92,7 +91,7 @@ static char **wildone(t_shell *mini, t_args *node)
 	
 	cartella = getenv("PWD");
 	dir = opendir(cartella);
-	temp = ft_calloc(counting_dir(cartella) + 1, sizeof(char *));
+	temp = malloc(counting_dir(cartella) + 1 * sizeof(char *));
 	test = readdir(dir);
 	control('*', node);
 	if (strcmp(node->argument, "*") == 0)
@@ -114,10 +113,7 @@ static char **wildone(t_shell *mini, t_args *node)
 				j++;
 			}
 			if (node->argument[i] != test->d_name[j] && node->argument[i] != '*')
-			{
-				test = readdir(dir);
 				break;
-			}
 			if (node->argument[i] == '*')
 			{
 				i++;
@@ -148,7 +144,10 @@ static char **wildone(t_shell *mini, t_args *node)
 		}
 		test = readdir(dir);
 	}
+	temp[k] = NULL;
     closedir(dir);
+	if (temp[0] == NULL)
+		return (NULL);
 	return (temp);
 }
 
@@ -178,21 +177,24 @@ void    wild(t_shell *mini, t_args **node)
 	ret = NULL;
 	while (cur != NULL)
 	{
-		if (my_strchr(cur->argument, '*') != -1)
+		if (cur->argument != NULL && my_strchr(cur->argument, '*') != -1)
 			i = my_strchr(cur->argument, '*');
 		if (cur->argument != NULL && my_strchr(cur->argument, '*') != -1 && (checking_quotes_for_operator(cur->argument, '\"', i) == 1 && checking_quotes_for_operator(cur->argument, '\'', i) == 1))
 		{
 			ret = wildone(mini, cur);
-			free(cur->argument);
-			i = 1;
-			cur->argument = ft_strdup(ret[0]);
-			while (ret[i] != NULL)
+			if (ret != NULL)
 			{
-				cur->argument = ft_strjoin_mini(cur->argument, ret[i], FREE, NO_FREE);
-				i++;
+				free(cur->argument);
+				cur->argument = NULL;
+				i = 1;
+				cur->argument = ft_strdup(ret[0]);
+				while (ret[i] != NULL)
+				{
+					cur->argument = ft_strjoin_mini(cur->argument, ret[i], FREE, NO_FREE);
+					i++;
+				}
+				free_matrix(ret);
 			}
-			free_matrix(ret);
-			break;
 		}
 		if (cur->next == NULL)
 			return ;
