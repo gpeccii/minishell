@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parser.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rbordin <rbordin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/31 09:45:37 by rbordin           #+#    #+#             */
-/*   Updated: 2023/06/30 12:45:31 by rbordin          ###   ########.fr       */
+/*   Updated: 2023/07/06 17:24:14 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,14 +18,14 @@ void    analizer(t_shell *mini, t_args *node, char **envp)
 	int j;
 	int res;
 	char **temp;
-	
+
 	i = 0;
 	j = 0;
 	//printf("analizer\n");
 	temp = ft_echo_split(mini, node->str, ' ');
-	
-		 
-	
+
+
+
 	if (!checking_quotes_for_operator(node->str, '\'', 1) || !checking_quotes_for_operator(node->str, '\"', 1))
 		node->argument = ft_strdup(node->str);
 	else
@@ -82,7 +82,7 @@ void    analizer(t_shell *mini, t_args *node, char **envp)
 			//printf("$$$$$$$2%s\n", node->command);
 
 			mini->exit = 1;
-			print_error("command not found");
+			printf("command not found");
 		}
 	}
 	free_matrix(temp);
@@ -138,7 +138,7 @@ char *check_path(t_shell *mini, char *command)
 	char    **temp;
 	int     i;
 	int     flag;
-	
+
 
 	flag = 0;
 	i = -1;
@@ -196,7 +196,7 @@ static void	checking_args(t_args *cur)
 void	redirecting_nodes(t_args *cur, t_args *new, t_args *red)
 {
 	int	k;
-	
+
 	k = 0;
 	if (cur->flags != NULL)
 		k = ft_strlen(cur->flags);

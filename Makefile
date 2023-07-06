@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: rbordin <rbordin@student.42.fr>            +#+  +:+       +#+         #
+#    By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/05/30 15:11:26 by rbordin           #+#    #+#              #
-#    Updated: 2023/06/30 16:38:20 by rbordin          ###   ########.fr        #
+#    Updated: 2023/07/06 17:22:00 by gpecci           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,6 +26,8 @@ SRC = dick.c\
 	parser.c \
 	parser_utils.c \
 	test_input.c \
+	test_input2.c \
+	test_input3.c \
 	expander.c \
 	lists_utils.c \
 	wildcats.c \
@@ -58,14 +60,14 @@ ${NAME}:  ${OBJ}
 	make -C $(LIBFT_PATH)
 	${CC} $(CFLAGS) ${OBJ} ${LIBFT} -lreadline -o $(NAME)
 	@echo "\033[32mCompiled OK!\033[0m"
-	
+
 all: ${NAME}
 
 clean:
 		${RM} ${OBJ}
 		make clean -C ${LIBFT_PATH}
 		@echo "\033[35mCleared everything!\033[0m"
-		
+
 fclean: clean
 		make fclean -C ${LIBFT_PATH}
 		${RM} ${NAME}

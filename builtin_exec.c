@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   builtin_exec.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rbordin <rbordin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/29 11:11:11 by dcologgi          #+#    #+#             */
-/*   Updated: 2023/06/30 12:04:58 by rbordin          ###   ########.fr       */
+/*   Updated: 2023/07/06 17:38:00 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ void	command_echo(t_shell *mini, char **envp, t_args *current)
 		write(1, "\n", 1);
 }
 
-void	command_env(t_shell *mini, char **envp)
+void	command_env(t_shell *mini)
 {
 	int		j;
 	char	*dollar;
@@ -48,14 +48,14 @@ void	command_env(t_shell *mini, char **envp)
 	j = 0;
 	dollar = "$";
 	temp = mini;
-	while (envp[j] != NULL)
+	while (mini->envp[j] != NULL)
 	{
-		argument = ft_strjoin(dollar, envp[j], NO_FREE, NO_FREE);
+		argument = ft_strjoin(dollar, mini->envp[j], NO_FREE, NO_FREE);
 		if (!temp->list->argument)
-			printf("%s\n", envp[j]);
+			printf("%s\n", mini->envp[j]);
 		else if (ft_strncmp(argument, temp->list->argument,
 				ft_strlen(temp->list->argument)) == 0)
-			printf("%s\n", envp[j]);
+			printf("%s\n", mini->envp[j]);
 		j++;
 	}
 }
@@ -78,7 +78,6 @@ static void	create_path(t_shell *mini, char *path)
 	mini->main_path = ft_strtrim(mini->main_path, "/");
 	mini->main_path = ft_strjoin(mini->main_path, "$ ", FREE,
 			NO_FREE);
-	//chdir(path);
 }
 
 void	command_cd(t_shell *mini, t_args *node, char *arg)
@@ -97,14 +96,13 @@ void	command_cd(t_shell *mini, t_args *node, char *arg)
 	{
 		if (ft_strncmp(path, "..", 2) == 0)
 		{
-			//opendir("..");
-
-			mini->main_path =ft_substr(mini->main_path, 0, ft_strlen(mini->main_path) - ft_strchr(rev_string(mini->main_path), '/') - 1);
-			mini->main_path = ft_strjoin(mini->main_path, mini->syntax, FREE,
+			mini->main_path = ft_substr(mini->main_path, 0,
+					ft_strlen(mini->main_path)
+					- ft_strchr(rev_string(mini->main_path), '/') - 1);
+			mini->main_path = ft_strjoin(mini->main_path, "$ ", FREE,
 					NO_FREE);
 		}
 		else
 			create_path(mini, path);
 	}
-	//closedir((DIR*)path);
 }

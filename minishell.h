@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rbordin <rbordin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 12:16:32 by rbordin           #+#    #+#             */
-/*   Updated: 2023/06/30 15:29:30 by rbordin          ###   ########.fr       */
+/*   Updated: 2023/07/06 17:38:16 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,19 @@
 # include <sys/wait.h>
 # include "get_next_line/get_next_line.h"
 
+typedef struct s_varie
+{
+	int i;
+	int	j;
+	int	z;
+	int newLen;
+	int withinQuotes;
+	int withinDoubleQuotes;
+	int quotesStack;
+	int doubleQuotesStack;
+	char* newStr;
+
+}	t_varie;
 
 typedef struct s_pipe
 {
@@ -37,6 +50,7 @@ typedef struct s_pipe
 	int i;
 	int *fds;
 } t_pipex ;
+
 typedef struct s_flags
 {
 	int	command_separator;
@@ -122,7 +136,7 @@ void	its_a_flag(t_shell *mini, t_args *node, char *temp);
 
 //lists.c
 t_args*	create_node(char *data);
-void	insert_last_with_delimiter(t_shell *mini, t_args** head, char **envp, char delim);
+void	insert_last_with_delimiter(t_shell *mini, t_args** head, char delim);
 void	print_list(t_args* head);
 void	init_node(t_args *node);
 void	handling_dollar(t_shell *mini, t_args *head);
@@ -174,7 +188,7 @@ void			builtin_exec(t_shell *mini, char **envp, t_args *node,
 void			command_echo(t_shell *mini, char **envp, t_args *current);
 void			command_cd(t_shell *mini, t_args *node, char *arg);
 void			command_pwd(t_shell *mini);
-void			command_env(t_shell *mini, char **envp);
+void			command_env(t_shell *mini);
 
 // export_unset.c
 void			command_export(t_shell *mini, char **envp, char *str);
@@ -203,6 +217,20 @@ void init_pipexxx(t_pipex *pipes, t_shell *mini, t_args *cur);
 char	**ft_echo_split(t_shell *mini, char const *s, char c);
 
 void	echo_replacer(t_shell *mini, t_args *node);
+
+//test_input.c
+int				start(t_shell *mini);
+char			*insert_spaces(char *str, int len);
+int				is_delimiter(char c, char *str, int i);
+char			*getting_final_string(char *s, char c);
+int				counting(char *s);
+
+//test_input_utils.c
+void			init_varie(t_varie *varie, int len);
+
+//test_input_utils.c
+void			first_half(t_varie *var, char *s, char c);
+void			sencond_half(t_varie *var, char *s, char c);
 
 
 #endif

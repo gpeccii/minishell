@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parser_utils.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rbordin <rbordin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/11 16:20:15 by riccardobor       #+#    #+#             */
-/*   Updated: 2023/06/30 14:15:57 by rbordin          ###   ########.fr       */
+/*   Updated: 2023/07/06 17:24:14 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ int reassembling_strings(char **temp, t_args *node, int i)
 			node->argument = ft_strdup(temp[j]);
 		else
 			node->argument = ft_strjoin_mini(node->argument, temp[j], FREE, NO_FREE);
-		
+
 		j++;
 	}
 	if (temp[j] && (temp[j][ft_strlen(temp[j]) - 1] == temp[i][0]))
@@ -124,7 +124,7 @@ void	its_a_command(t_shell *mini, t_args *node, char *temp)
 	else
 	{
 		if (node->argument != NULL)
-			node->argument = ft_strjoin_mini(node->argument, temp, NO_FREE, NO_FREE); 
+			node->argument = ft_strjoin_mini(node->argument, temp, NO_FREE, NO_FREE);
 		else
 			node->argument = ft_strdup(temp);
 		//////printf("not a command\n");
@@ -134,7 +134,7 @@ void	its_a_command(t_shell *mini, t_args *node, char *temp)
 void	its_not_a_command(t_shell *mini, t_args *node, char *temp, int i)
 {
 	int res;
-	
+
 	res = 0;
 	res = check_redirection(temp);
 	if (res == -2)
@@ -144,7 +144,7 @@ void	its_not_a_command(t_shell *mini, t_args *node, char *temp, int i)
 	}
 	//printf("res = %d\n", res);
 	//printf("command pres = %d\n", mini->command_presence);
-	if (res > 0) 
+	if (res > 0)
 	{
 		if (res == 1 && node->infile == NULL)
 			mini->flags.redirect_input = 1;
@@ -178,7 +178,7 @@ void	its_not_a_command(t_shell *mini, t_args *node, char *temp, int i)
 		//("$$$$$$$%s\n", temp);
 		if (mini->flags.major == 0 && mini->flags.redirect_output == 0)
 		{
-			print_error("command not found");
+			printf("command not found");
 			mini->exit = 1;
 			mini->flag_status = 127;
 			return ;
@@ -237,7 +237,7 @@ void	boh(t_shell *mini, char *temp, t_args *node)
 	if (node->str[j] != '<')
 	{
 		("Minishell:\n");
-		print_error("command not found");
+		printf("command not found");
 		mini->exit = 1;
 		mini->flag_status = 127;
 		return ;
@@ -257,7 +257,7 @@ int reassembling_brackets(char **temp, t_args *node, int i)
 			node->argument = ft_strdup(temp[j]);
 		else
 			node->argument = ft_strjoin_mini(node->argument, temp[j], FREE, NO_FREE);
-		
+
 		j++;
 	}
 	if (temp[j] && (temp[j][ft_strlen(temp[j]) - 1] == ')'))
@@ -278,9 +278,9 @@ void	its_a_flag(t_shell *mini, t_args *node, char *temp)
 	else
 	{
 		if (node->argument != NULL)
-			node->argument = ft_strjoin_mini(node->argument, temp, NO_FREE, NO_FREE); 
+			node->argument = ft_strjoin_mini(node->argument, temp, NO_FREE, NO_FREE);
 		else
 			node->argument = ft_strdup(temp);
-			
+
 	}
 }

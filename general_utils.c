@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   general_utils.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dcologgi <dcologgi@student.42.fr>          +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/29 11:16:12 by dcologgi          #+#    #+#             */
-/*   Updated: 2023/06/29 11:25:27 by dcologgi         ###   ########.fr       */
+/*   Updated: 2023/07/06 17:12:08 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,6 @@ int	ft_revstr(char *str, char c)
 	i = 0;
 	temp = NULL;
 	final = NULL;
-	//printf("str = %s\n", str);
 	len = ft_strlen(str);
 	len--;
 	while (len > 0 && str[len] != c)

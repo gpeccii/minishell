@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   dick.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rbordin <rbordin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/30 16:46:47 by rbordin           #+#    #+#             */
-/*   Updated: 2023/06/30 15:21:55 by rbordin          ###   ########.fr       */
+/*   Updated: 2023/07/06 17:26:45 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,80 +14,64 @@
 
 int	g_exit_status = 0;
 
-static int	ft_argssize(t_args *lst)
+static void	cloning_envp(t_shell *mini, char **envp)
 {
 	int	i;
 
 	i = 0;
-	if (!lst)
-		return (0);
-	while (lst)
+	while (envp[i])
+		i++;
+	mini->envp = malloc((i + 1) * sizeof(char *));
+	i = 0;
+	while (envp[i])
 	{
-		lst = lst->next;
+		mini->envp[i] = ft_strdup(envp[i]);
 		i++;
 	}
-	//printf("len = %d\n", i);
-	return (i);
+	mini->envp[i] = NULL;
+}
+
+static void	init_first_stage(t_shell *mini, char **envp)
+{
+	t_args	*test;
+
+	test = NULL;
+	mini->main_path = "Minishell$ ";
+	mini->syntax = "$";
+	mini->exit = 0;
+	mini->list = test;
+	cloning_envp(mini, envp);
+	mini->home = getcwd(mini->home, sizeof(mini->home));
+}
+
+static void	second_stage(t_shell *mini)
+{
+	//print_list(mini->list);
+	wild(mini, &mini->list);
+	mini->flags.operators = 0;
+	replacer(mini, mini->list);
+	execpipe(mini, mini->list);
 }
 
 int	main(int argc, char **argv, char **envp)
 {
 	t_shell	mini;
-	t_args	*test;
-	int		i;
-	char	*paths;
-	
-	(void)argc;
-	(void)argv;
-	mini.main_path = "Minishell$ ";
-	mini.syntax = "$";
-	mini.exit = 0;
-	i = 0;
+
 	signal(SIGINT, handlectrlc);
 	signal(SIGQUIT, SIG_IGN);
-	test = NULL;
-	mini.list = test;
-	while (envp[i])
-		i++;
-	mini.envp = malloc((i + 1) * sizeof(char *));
-	i = 0;
-	while (envp[i])
-	{
-		mini.envp[i] = ft_strdup(envp[i]);
-		i++;
-	}
-	mini.envp[i] = NULL;
-	mini.flag_status = 0;
-	mini.home = getcwd(mini.home, sizeof(mini.home));
+	init_first_stage(&mini, envp);
 	while (mini.exit == 0)
 	{
 		init_flags(&mini);
-		//if (mini.main_path == NULL)
-		//	mini.input = readline("$ ");
 		mini.input = readline(mini.main_path);
 		handlectrl(&mini, envp);
-		add_history(mini.input);
-		// if (ft_strlen(mini.input) > 0)
-		// {
-			
-			//editing(&mini, mini.input);
-			////printf("final = %s\n", mini.input);
+		if (ft_strlen(mini.input) != 0)
+			add_history(mini.input);
 		if (start(&mini) == 1)
 		{
-			insert_last_with_delimiter(&mini, &mini.list, envp, ' ');
+			insert_last_with_delimiter(&mini, &mini.list, ' ');
 			if (mini.exit == 0)
-			{
-				wild(&mini, &mini.list);
-				mini.flags.operators = 0;
-				print_list(mini.list);
-
-				//if (ft_argssize(mini.list) > 1)
-				//printf("SONO QUIIIII\n");
-				replacer(&mini, mini.list);
-				execpipe(&mini, mini.list);
-				//else
-				//	single(&mini, mini.list, envp);
-			}
+				second_stage(&mini);
 			clear_list(&mini.list);
 		}
 		mini.exit = 0;
@@ -97,6 +81,7 @@ int	main(int argc, char **argv, char **envp)
 
 void	init_flags(t_shell *mini)
 {
+	mini->flag_status = 0;
 	mini->flags.command_separator = 0;
 	mini->flags.operators = 0;
 	mini->flags.major = 0;
@@ -108,21 +93,4 @@ void	init_flags(t_shell *mini)
 	mini->flags.quote_flag = 0;
 	mini->dollar_flag = 0;
 	mini->command_presence = 0;
-}
-static int *update(int	*spot, int z)
-{
-	int	i = 0;
-	int	*test;
-	
-	test = ft_calloc(z, sizeof(int));
-	while(spot[i++])
-		test[i] = spot[i] + 1;
-	free(spot);
-	return(test);
-}
-
-void	print_error(char *error)
-{
-	printf("Minishell: %s\n", error);
-	return ;
 }

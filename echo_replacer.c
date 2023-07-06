@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   expander.c                                         :+:      :+:    :+:   */
+/*   echo_replacer.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: riccardobordin <riccardobordin@student.    +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/10 12:08:51 by riccardobor       #+#    #+#             */
-/*   Updated: 2023/07/02 15:58:03 by riccardobor      ###   ########.fr       */
+/*   Updated: 2023/07/06 17:23:10 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,63 +34,63 @@ static char	*echo_expanding_d(t_shell *mini, char *s)
 	return (en);
 }
 
-static int  ft_conta(char *str, char c)
+static int	ft_conta(char *str, char c)
 {
-    int i;
-    int counter;
+	int	i;
+	int	counter;
 
-    i = 0;
-    counter = 0;
-    while(str[i] != '\0')
-    {
-        if (str[i] == c)
-            counter++;
-        i++;
-    }
-    return (counter);
+	i = 0;
+	counter = 0;
+	while (str[i] != '\0')
+	{
+		if (str[i] == c)
+			counter++;
+		i++;
+	}
+	return (counter);
 }
 
-static char *ft_potente(t_args *node)
+static char	*ft_strongest(t_args *node, int i, int j, char *tmp)
 {
-    int i;
-    int j;
-    char *tmp;
-    int counter;
+	while (node->argument[i] != '\0')
+	{
+		if (node->argument[i] == '$')
+		{
+			tmp[j] = 6;
+			i++;
+			j++;
+			while (node->argument[i] != ' ' && node->argument[i] != '\0')
+				tmp[j++] = node->argument[i++];
+			if (node->argument[i] != '\0')
+			{
+				tmp[j] = 6;
+				j++;
+			}
+			if (node->argument[i] == '\0')
+			{
+				tmp[j] = '\0';
+				return (tmp);
+			}
+		}
+		tmp[j++] = node->argument[i++];
+	}
+	tmp[j] = '\0';
+	return (tmp);
+}
 
-    i = 0;
-    j = 0;
-    counter = ft_conta(node->argument, '$');
-    tmp = malloc(sizeof(char) * (ft_strlen(node->argument) + (2 * counter)));
-    while(node->argument[i] != '\0')
-    {
-        if (node->argument[i] == '$')
-        {
-            tmp[j] = 6;
-            i++;
-            j++;
-            while(node->argument[i] != ' ' && node->argument[i] != '\0')
-            {
-                tmp[j] = node->argument[i];
-                i++;
-                j++;
-            }
-            if (node->argument[i] != '\0')
-            {
-                tmp[j] = 6;
-                j++;
-            }
-            if (node->argument[i] == '\0')
-            {
-                tmp[j] = '\0';
-                return (tmp);
-            }
-        }
-        tmp[j] = node->argument[i];
-        i++;
-        j++;
-    }
-    tmp[j] = '\0';
-    return (tmp);
+static char	*ft_quite_strong(t_args *node)
+{
+	int		i;
+	int		j;
+	char	*tmp;
+	int		counter;
+
+	i = 0;
+	j = 0;
+	counter = ft_conta(node->argument, '$');
+	tmp = malloc(sizeof(char) * (ft_strlen(node->argument) + (2 * counter)));
+	tmp = ft_strongest(node, i, j, tmp);
+	return (tmp);
 }
 
 void	echo_replacer(t_shell *mini, t_args *node)
@@ -98,26 +98,25 @@ void	echo_replacer(t_shell *mini, t_args *node)
 	int		i;
 	char	*en;
 	char	**matrix;
-    char    *str;
+	char	*str;
 
 	i = 0;
 	matrix = NULL;
 	en = ft_strdup("");
-	if (node->argument != NULL && (ft_strchr(node->argument, '$') != 0 || node->argument[0] == '$'))
+	if (node->argument != NULL && (ft_strchr(node->argument, '$') != 0
+			|| node->argument[0] == '$'))
 	{
-        str = ft_potente(node);
+		str = ft_quite_strong(node);
 		matrix = ft_split(str, 6);
-        free(str);
+		free(str);
 		while (matrix[i] != NULL)
 		{
 			matrix[i] = echo_expanding_d(mini, matrix[i]);
 			en = ft_strjoin(en, matrix[i], NO_FREE, NO_FREE);
-            i++;
+			i++;
 		}
-        //free_matrix(matrix);
-        free(node->argument);
+		free(node->argument);
 		node->argument = ft_strdup(en);
-        //printf("[[[[%ld\n", ft_strlen(node->argument));
 	}
-    free(en);
+	free(en);
 }

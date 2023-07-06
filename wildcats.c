@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   wildcats.c                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: enoviell <enoviell@student.42.fr>          +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/13 09:28:11 by rbordin           #+#    #+#             */
-/*   Updated: 2023/07/06 15:40:03 by enoviell         ###   ########.fr       */
+/*   Updated: 2023/07/06 17:54:33 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ static int counting_dir(char  *cartella)
 	int             nb;
 	DIR				*dir;
 	struct dirent	*test;
-	
+
 	nb = 0;
 	dir = opendir(cartella);
 	if (!dir)
@@ -54,7 +54,7 @@ static void control(char c, t_args *node)
 	char	*temp;
 	int		i;
 	int		j;
-	
+
 	i = 0;
 	j = 0;
 	temp = malloc(sizeof(char) * ft_strlen(node->argument) + 1);
@@ -94,18 +94,19 @@ static int	my_strchr(const char *s, int c)
 
 static char **wildone(t_shell *mini, t_args *node)
 {
-    DIR				*dir;
-    struct dirent	*test;
-    char			*cartella;
-    char			**temp;
+	DIR				*dir;
+	struct dirent	*test;
+	char			pwd_path[1024];
+	char			**temp;
 	int				i;
 	int				j;
-	int				k;	
+	int				k;
 	int				flag;
-	
-	cartella = getenv("PWD");
-	dir = opendir(cartella);
-	temp = malloc(counting_dir(cartella) + 1 * sizeof(char *));
+
+	getcwd(pwd_path, sizeof(pwd_path));
+	printf("aaaaa%saaaa\n", pwd_path);
+	dir = opendir(pwd_path);
+	temp = malloc(counting_dir(pwd_path) + 1 * sizeof(char *));
 	test = readdir(dir);
 	control('*', node);
 	if (strcmp(node->argument, "*") == 0)
@@ -116,54 +117,59 @@ static char **wildone(t_shell *mini, t_args *node)
 	k = 0;
     while (test != NULL)
 	{
-		i = 0;
-		j = 0;
-		flag = 0;
-		while (node->argument[i] != '\0')
+		if (test->d_type == DT_UNKNOWN)
+			test = readdir(dir);
+		else
 		{
-			while(node->argument[i] == test->d_name[j])
+			i = 0;
+			j = 0;
+			flag = 0;
+			while (node->argument[i] != '\0')
 			{
-				i++;
-				j++;
-			}
-			if (node->argument[i] != test->d_name[j] && node->argument[i] != '*')
-				break;
-			if (node->argument[i] == '*')
-			{
-				i++;
-				while (node->argument[i] != test->d_name[j] && test->d_name[j] != '\0')
+				while(node->argument[i] == test->d_name[j])
+				{
+					i++;
 					j++;
-				while (node->argument[i] != '\0' && test->d_name[j] != '\0')
-				{
-					if (node->argument[i] == test->d_name[j] && j != 0) 
-					{
-						i++;
-						j++;
-					}
-					else if (node->argument[i] == '*')
-					{
-						i++;
-						while(node->argument[i] != test->d_name[j] && test->d_name[j] != '\0')
-							j++;
-					}
-					else
-					{
-						flag = 1;
-						break;
-					}
 				}
-				if (flag == 0 && node->argument[i] == '\0')
-				{
-					temp[k] = ft_strdup(test->d_name);
-					k++;
-				}
-				if (flag = 1)
+				if (node->argument[i] != test->d_name[j] && node->argument[i] != '*')
 					break;
+				if (node->argument[i] == '*')
+				{
+					i++;
+					while (node->argument[i] != test->d_name[j] && test->d_name[j] != '\0')
+						j++;
+					while (node->argument[i] != '\0' && test->d_name[j] != '\0')
+					{
+						if (node->argument[i] == test->d_name[j] && j != 0)
+						{
+							i++;
+							j++;
+						}
+						else if (node->argument[i] == '*')
+						{
+							i++;
+							while(node->argument[i] != test->d_name[j] && test->d_name[j] != '\0')
+								j++;
+						}
+						else
+						{
+							flag = 1;
+							break;
+						}
+					}
+					if (flag == 0 && node->argument[i] == '\0')
+					{
+						temp[k] = ft_strdup(test->d_name);
+						k++;
+					}
+					if (flag = 1)
+						break;
+				}
+				if (node->argument[i] != '*')
+					i++;
 			}
-			if (node->argument[i] != '*')
-				i++;
+			test = readdir(dir);
 		}
-		test = readdir(dir);
 	}
 	temp[k] = NULL;
     closedir(dir);
@@ -179,7 +185,7 @@ void    wild(t_shell *mini, t_args **node)
 	int     i;
 	int		c;
 	char	**ret;
-		
+
 
 	cur = *node;
 	ret = NULL;
