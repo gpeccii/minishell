@@ -6,7 +6,7 @@
 /*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/11 16:47:42 by tpiras            #+#    #+#             */
-/*   Updated: 2023/11/27 12:31:52 by gpecci           ###   ########.fr       */
+/*   Updated: 2023/11/29 16:07:32 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ void	ft_mini_cicle(t_shell *mini, char *s, char **str)
 		while (s[i] != ' ' && s[i] != '\0')
 		{
 			z = i;
-			if (s[i] == '\'' || s[i] == '\"' || s[i] == '(')
+			if (s[i] == '\'' || s[i] == '\"')
 				z = mini_g(mini, s, i, s[i]);
 			i = z;
 			if (mini->exit == 1)

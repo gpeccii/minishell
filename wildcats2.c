@@ -6,7 +6,7 @@
 /*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/11 16:50:22 by tpiras            #+#    #+#             */
-/*   Updated: 2023/11/29 14:49:05 by gpecci           ###   ########.fr       */
+/*   Updated: 2023/11/29 16:05:27 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,11 @@ static int	generate_argument(t_args *cur, char **ret)
 
 static void	support(t_args *cur)
 {
+	if(cur->argument[0] == '(' && cur->argument[ft_strlen(cur->argument) - 1] == ')')
+	{
+		cur->argument = ft_strtrim(cur->argument, "(");
+		cur->argument = ft_strtrim(cur->argument, ")");
+	}
 	if (ft_strcmp((cur->command), "echo") != 0 && cur->argument[0] == '\"')
 		cur->argument = ft_strtrim(cur->argument, "\"");
 	else if (ft_strcmp((cur->command), "echo") != 0
