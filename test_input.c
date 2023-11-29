@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/06 15:39:25 by dcologgi          #+#    #+#             */
-/*   Updated: 2023/07/06 17:19:01 by gpecci           ###   ########.fr       */
+/*   Created: 2023/09/11 16:49:59 by tpiras            #+#    #+#             */
+/*   Updated: 2023/11/27 12:35:37 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,53 +18,53 @@ static void	first(t_varie *var, char *str, int len)
 	{
 		if (str[var->i] == '\'')
 		{
-			var->withinQuotes = !var->withinQuotes;
-			if (var->withinQuotes)
-				var->quotesStack++;
+			var->withinquotes = !var->withinquotes;
+			if (var->withinquotes)
+				var->quotesstack++;
 			else
-				var->quotesStack--;
+				var->quotesstack--;
 		}
 		else if (str[var->i] == '\"')
 		{
-			var->withinDoubleQuotes = !var->withinDoubleQuotes;
-			if (var->withinDoubleQuotes)
-				var->doubleQuotesStack++;
+			var->withindoublequotes = !var->withindoublequotes;
+			if (var->withindoublequotes)
+				var->doublequotesstack++;
 			else
-				var->doubleQuotesStack--;
+				var->doublequotesstack--;
 		}
-		else if (!var->withinQuotes && !var->withinDoubleQuotes
-			&& is_delimiter(str[var->i], str, var->i))
-			var->newLen++;
+		else if (!var->withinquotes && !var->withindoublequotes
+			&& is_delimiter(str[var->i]))
+			var->newlen++;
 	}
 }
 
 static void	second(t_varie *var)
 {
-	if (var->quotesStack != 0)
-		var->newLen -= var->quotesStack;
+	if (var->quotesstack != 0)
+		var->newlen -= var->quotesstack;
 	else
-		var->newLen = var->newLen;
-	if (var->doubleQuotesStack != 0)
-		var->newLen -= var->doubleQuotesStack;
+		var->newlen = var->newlen;
+	if (var->doublequotesstack != 0)
+		var->newlen -= var->doublequotesstack;
 	else
-		var->newLen = var->newLen;
-	var->newStr = ft_calloc(var->newLen +2, sizeof(char));
+		var->newlen = var->newlen;
+	var->newstr = ft_calloc(var->newlen +2, sizeof(char));
 	var->j = 0;
-	var->withinQuotes = 0;
-	var->withinDoubleQuotes = 0;
+	var->withinquotes = 0;
+	var->withindoublequotes = 0;
 	var->i = -1;
 }
 
 static void	third(t_varie *var, char *str)
 {
-	if (var->newStr[var->j] != '|')
-		var->newStr[var->j++] = ' ';
-	var->newStr[var->j++] = str[var->i];
+	if (var->newstr[var->j] != '|')
+		var->newstr[var->j++] = ' ';
+	var->newstr[var->j++] = str[var->i];
 	if (str[var->i] == '|')
 	{
-		if (var->newStr[var->j + 1] == '|' && var->newStr[var->j - 1] != '|')
+		if (var->newstr[var->j + 1] == '|' && var->newstr[var->j - 1] != '|')
 		{
-			var->newStr[++var->j] = '|';
+			var->newstr[++var->j] = '|';
 			var->j++;
 		}
 	}
@@ -74,40 +74,46 @@ static void	forth(t_varie *var, char *str)
 {
 	if (str[var->i] == '&')
 	{
-		var->newStr[var->j++] = '&';
+		var->newstr[var->j++] = '&';
 		var->i++;
 	}
 	if (str[var->i] == '|')
 	{
-		var->newStr[var->j] = '|';
-		if (var->newStr[var->j + 1] == '|')
+		var->newstr[var->j] = '|';
+		if (var->newstr[var->j + 1] == '|')
 		{
-			var->newStr[++var->j] = '|';
+			var->newstr[++var->j] = '|';
 			var->j++;
 		}
 	}
-	var->newStr[var->j++] = str[var->i];
+	var->newstr[var->j++] = str[var->i];
 }
 
 char	*insert_spaces(char *str, int len)
 {
-	t_varie	var;
+	t_varie	*var;
+	char	*res;
 
-	init_varie(&var, len);
-	first(&var, str, len);
-	second(&var);
-	while (++var.i < len)
+	var = ft_calloc(1, sizeof(t_varie));
+	init_varie(var, len);
+	first(var, str, len);
+	second(var);
+	while (++var->i < len)
 	{
-		if (str[var.i] == '\'')
-			var.withinQuotes = !var.withinQuotes;
-		else if (str[var.i] == '\"')
-			var.withinDoubleQuotes = !var.withinDoubleQuotes;
-		if (!var.withinQuotes && !var.withinDoubleQuotes
-			&& is_delimiter(str[var.i], str, var.i))
-			third(&var, str);
+		if (str[var->i] == '\'')
+			var->withinquotes = !var->withinquotes;
+		else if (str[var->i] == '\"')
+			var->withindoublequotes = !var->withindoublequotes;
+		if (!var->withinquotes && !var->withindoublequotes
+			&& is_delimiter(str[var->i]))
+			third(var, str);
 		else
-			forth(&var, str);
+			forth(var, str);
 	}
-	var.newStr[var.j] = '\0';
-	return (var.newStr);
+	var->newstr[var->j] = '\0';
+	res = ft_strdup(var->newstr);
+	free(str);
+	free(var->newstr);
+	free(var);
+	return (res);
 }

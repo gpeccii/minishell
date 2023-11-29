@@ -5,38 +5,45 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/07/06 17:19:38 by gpecci            #+#    #+#             */
-/*   Updated: 2023/07/06 17:19:42 by gpecci           ###   ########.fr       */
+/*   Created: 2023/09/11 16:50:04 by tpiras            #+#    #+#             */
+/*   Updated: 2023/11/27 12:36:10 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	is_delimiter(char c, char *str, int i)
+int	is_delimiter(char c)
 {
 	return (c == '|' || c == '&');
 }
 
 char	*getting_final_string(char *s, char c)
 {
-	t_varie	var;
+	t_varie	*var;
+	char	*res;
 
-	init_varie(&var, 0);
-	var.i = 0;
-	var.newStr = ft_calloc(ft_strlen(s) + counting(s) + 1, sizeof(char));
-	while (s[var.i])
+	var = ft_calloc(1, sizeof(t_varie));
+	init_varie(var, 0);
+	var->i = -1;
+	var->newstr = ft_calloc(ft_strlen(s) + counting(s) + 1, sizeof(char));
+	while (s[++var->i])
 	{
-		if (s[var.i] == c && c != '<' && c != '>')
-			first_half(&var, s, c);
-		else if (s[var.i] == '<' || s[var.i] == '>')
-			sencond_half(&var, s, c);
-		var.newStr[var.z] = s[var.i];
-		var.i++;
-		var.z++;
+		if ((s[var->i] == c && c != '<' && c != '>') && s[var->i + 1] == ' ')
+			first_half(var, s, c);
+		else if (((s[var->i] == '<' && s[var->i + 1] != '<' )
+				|| (s[var->i] == '>' && s[var->i + 1] != '>'))
+			&& s[var->i + 1] != ' ')
+			second_half(var, s);
+		var->newstr[var->z] = s[var->i];
+		var->z++;
 	}
-	var.newStr[var.z] = '\0';
+	var->newstr[var->z] = '\0';
+	if (var->newstr != NULL)
+		res = ft_strdup(var->newstr);
+	free(var->newstr);
+	free(var);
 	free(s);
-	return (var.newStr);
+	return (res);
 }
 
 int	counting(char *s)
@@ -50,7 +57,7 @@ int	counting(char *s)
 	{
 		if (s[i] == '|' || s[i] == '&' || s[i] == '<' || s[i] == '>')
 		{
-			if (checking_quotes_for_operator(s, s[i], i))
+			if (apices(s, s[i], i))
 				k++;
 		}
 		i++;
@@ -60,9 +67,14 @@ int	counting(char *s)
 
 int	start(t_shell *mini)
 {
-	int	len;
+	int		len;
+	char	*temp;
 
-	len = strlen(mini->input);
+	temp = ft_strtrim(mini->input, " ");
+	free(mini->input);
+	mini->input = ft_strdup(temp);
+	free(temp);
+	len = ft_strlen(mini->input);
 	if (len == 0 || !mini->input)
 		return (0);
 	if (len > 0 && mini->input[len - 1] == '\n')
@@ -83,10 +95,9 @@ void	init_varie(t_varie *varie, int len)
 	varie->i = -1;
 	varie->j = 0;
 	varie->z = 0;
-	varie->newLen = len;
-	varie->withinQuotes = 0;
-	varie->withinDoubleQuotes = 0;
-	varie->quotesStack = 0;
-	varie->doubleQuotesStack = 0;
-	varie->newStr = NULL;
+	varie->newlen = len;
+	varie->withinquotes = 0;
+	varie->withindoublequotes = 0;
+	varie->quotesstack = 0;
+	varie->doublequotesstack = 0;
 }

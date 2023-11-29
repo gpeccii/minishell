@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   ft_echo_split.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rbordin <rbordin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/02/02 12:32:11 by rbordin           #+#    #+#             */
-/*   Updated: 2023/06/30 11:55:07 by rbordin          ###   ########.fr       */
+/*   Created: 2023/09/11 16:47:17 by tpiras            #+#    #+#             */
+/*   Updated: 2023/11/27 12:41:26 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static unsigned int	ft_counter(char const *s, char c)
+static unsigned int	ft_echo_counter(char const *s, char c)
 {
 	int		i;
 	int		count;
@@ -31,86 +31,33 @@ static unsigned int	ft_counter(char const *s, char c)
 	return (count);
 }
 
-static int	ft_strcheck(char const *s, char c)
-{
-	int			i;
-
-	i = 0;
-	while (s[i] != '\0')
-	{
-		if (s[i] == c)
-			return (1);
-		i++;
-	}
-	return (0);
-}
-
-static void	ft_cicle(t_shell *mini, char const *s, char **str, char c, unsigned int count)
+static void	ft_echo_cicle(t_shell *mini, char const *s,
+	char **str)
 {
 	unsigned int	i;
 	unsigned int	j;
 	unsigned int	k;
-	int	z;
+	int				z;
 
 	i = 0;
 	k = 0;
 	z = 0;
 	while (s[i] != '\0')
 	{
-		while (s[i] == c)
+		while (s[i] == ' ')
 			i++;
 		j = i;
-		while (s[i] != c && s[i] != '\0')
+		while (s[i] != ' ' && s[i] != '\0')
 		{
-			if (s[i] == '\'')
-			{
-				z = i + 1;
-				while (s[z] != '\'' && s[z])
-					z++;
-				if (s[z] == '\'')
-				{
-					mini->flags.quote_flag = 1;
-					i = z;
-				}
-				else if (mini->flags.quote_flag == 0)
-				{
-					printf("Error: missing final quote\n");
-					mini->exit = 1;
-				}
-			}
-			else if (s[i] == '\"')
-			{
-				z = i + 1;
-				while (s[z] != '\"' && s[z])
-					z++;
-				if (s[z] == '\"')
-				{
-					mini->flags.quote_flag = 1;
-					i = z;
-				}
-				else if (mini->flags.quote_flag == 0)
-				{
-					printf("Error: missing final quote\n");
-					mini->exit = 1;
-				}
-			}
+			z = i;
+			if (s[i] == '\'' || s[i] == '\"')
+				z = check_quotes(mini, s, i, s[i]);
+			i = z;
 			i++;
 		}
-		if (k < count)
-		{
-			if (mini->flags.quote_flag == 1)
-				str[k] = ft_substr(s, j, (size_t)(z + 1 - j));
-			else if (mini->flags.quote_flag == 1)
-				str[k] = ft_substr(s, j, (size_t)(z + 1 - j));
-			else
-				str[k] = ft_substr(s, j, (size_t)(i - j));
-			k++;
-			mini->flags.quote_flag = 0;
-			//printf("str[%d] = %s\n", k, str[k]);
-		}
+		str[k++] = ft_substr(s, j, (size_t)(i - j));
 	}
 	str[k] = NULL;
-	return ;
 }
 
 char	**ft_echo_split(t_shell *mini, char const *s, char c)
@@ -120,18 +67,18 @@ char	**ft_echo_split(t_shell *mini, char const *s, char c)
 
 	if (!s)
 		return (NULL);
-	i = ft_counter(s, c);
+	i = ft_echo_counter(s, c);
 	matrix = (char **)malloc((i + 1) * sizeof (char *));
 	if (!matrix)
 		return (NULL);
 	if (i == 0)
 		matrix[0] = NULL;
-	else if (i == 1 && !ft_strcheck(s, c))
+	else if (i == 1 && !ft_echo_strcheck(s, c))
 	{
 		matrix[0] = ft_substr(s, 0, ft_strlen(s));
 		matrix[1] = NULL;
 	}
 	else
-		ft_cicle(mini, s, matrix, c, i);
+		ft_echo_cicle(mini, s, matrix);
 	return (matrix);
 }

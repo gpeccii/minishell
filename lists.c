@@ -3,22 +3,25 @@
 /*                                                        :::      ::::::::   */
 /*   lists.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
+/*   By: ertiz <ertiz@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/01 14:15:03 by rbordin           #+#    #+#             */
-/*   Updated: 2023/07/06 17:17:48 by gpecci           ###   ########.fr       */
+/*   Created: 2023/09/11 16:48:06 by tpiras            #+#    #+#             */
+/*   Updated: 2023/09/11 16:59:42 by ertiz            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-t_args	*create_node(char *data)
+t_args	*create_node(t_shell *mini, char *data)
 {
 	t_args	*new_node;
 
-	new_node = malloc(sizeof(t_args));
+	new_node = ft_calloc(1, sizeof(t_args));
 	if (new_node == NULL)
+	{
+		free(new_node);
 		return (NULL);
+	}
 	init_node(new_node);
 	new_node->str = ft_strdup(data);
 	if (new_node->str == NULL)
@@ -26,11 +29,16 @@ t_args	*create_node(char *data)
 		free(new_node);
 		return (NULL);
 	}
+	if ((*mini->list) == NULL)
+	{
+		(*mini->list) = new_node;
+		(*mini->high) = new_node;
+	}
 	new_node->next = NULL;
 	return (new_node);
 }
 
-void	insert_last_with_delimiter(t_shell *mini, t_args **head, char delim)
+void	insert_last_with_delimiter(t_shell *mini, char delim)
 {
 	int		i;
 	char	**tokens;
@@ -40,33 +48,25 @@ void	insert_last_with_delimiter(t_shell *mini, t_args **head, char delim)
 	if (tokens == NULL)
 		return ;
 	i = -1;
-	while (tokens[++i])
+	while (tokens[++i] != NULL)
 	{
-		new_node = create_node(tokens[i]);
+		new_node = create_node(mini, tokens[i]);
 		if (new_node == NULL)
 			return ;
-		if (*head == NULL)
-			*head = new_node;
-		else
-			test(head, new_node);
-		analizer(mini, new_node, mini->envp);
+		if (*mini->list != new_node)
+			test(mini, new_node);
+		analizer(mini, mini->envp);
 		if (mini->exit == 1)
+		{
+			free_matrix(tokens);
 			return ;
+		}
 	}
-	handling_dollar(mini, *head);
-	ultimating_commands(mini, head);
+	free_matrix(tokens);
+	ultimating_commands(mini);
 }
 
-void	handling_dollar(t_shell *mini, t_args *head)
-{
-	t_args	*node;
-
-	node = head;
-	if (mini->dollar_flag == 1)
-		saver(mini, node);
-}
-
-void	print_list(t_args *head)
+void	print_list(t_args **head)
 {
 	t_args	*current;
 
@@ -74,7 +74,7 @@ void	print_list(t_args *head)
 		printf("La lista è vuota.\n");
 	else
 	{
-		current = head;
+		current = *head;
 		while (current != NULL)
 		{
 			printf("node numb = %d\n", current->order);

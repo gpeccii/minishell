@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/29 11:16:12 by dcologgi          #+#    #+#             */
-/*   Updated: 2023/07/06 17:12:08 by gpecci           ###   ########.fr       */
+/*   Created: 2023/09/11 16:47:53 by tpiras            #+#    #+#             */
+/*   Updated: 2023/11/27 12:40:13 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,14 +32,7 @@ char	*rev_string(char *s)
 int	ft_revstr(char *str, char c)
 {
 	int		len;
-	int		i;
-	int		j;
-	char	*final;
-	char	*temp;
 
-	i = 0;
-	temp = NULL;
-	final = NULL;
 	len = ft_strlen(str);
 	len--;
 	while (len > 0 && str[len] != c)
@@ -78,4 +71,14 @@ char	*ft_strcat(char *dest, const char *src)
 	}
 	dest[i] = '\0';
 	return (dest);
+}
+
+int	ft_strcmp(char *s1, char *s2)
+{
+	while (*s1 && (*s1 == *s2))
+	{
+		s1++;
+		s2++;
+	}
+	return (*s1 - *s2);
 }

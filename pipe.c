@@ -3,354 +3,137 @@
 /*                                                        :::      ::::::::   */
 /*   pipe.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rbordin <rbordin@student.42.fr>            +#+  +:+       +#+        */
+/*   By: gpecci <gpecci@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/06/16 13:57:51 by rbordin           #+#    #+#             */
-/*   Updated: 2023/06/30 16:47:20 by rbordin          ###   ########.fr       */
+/*   Created: 2023/09/11 16:49:19 by tpiras            #+#    #+#             */
+/*   Updated: 2023/11/29 14:52:51 by gpecci           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-extern int g_exit_status;
+extern int	g_exit_status;
 
-static char **create_matri(t_args *node)
+void	close_n_wait(t_pipex *pipes)
 {
-    char **temp = NULL;
-    int size;
-    int index;
-    char **arguments = NULL;
-    int j = -1;
-    size = 0;
-    if (node->command != NULL)
-        size++;
-    if (node->flags != NULL)
-        size++;
-    if (node->argument != NULL)
-    {
-        arguments = ft_split(node->argument, ' ');
-        while (arguments[++j])
-            size++;
-    }
-    temp = malloc((size + 1) * sizeof(char *));
-    if (temp == NULL)
-    {
-        perror("Failed to allocate memory");
-        return NULL;
-    }
-    index = 0;
-    if (node->command != NULL)
-        temp[index++] = strdup(node->command);
-    if (node->flags != NULL)
-        temp[index++] = strdup(node->flags);
-    if (node->argument != NULL)
-    {
-        j = 0;
-        while (arguments[j])
-        {
-            temp[index++] = strdup(arguments[j++]);
-            free(arguments[j - 1]);
-        }
-        free(arguments);
-    }
-    temp[index] = NULL;
-    return (temp);
+	pipes->i = 0;
+	while (pipes->i < pipes->num_pipes * 2)
+	{
+		close(pipes->fds[pipes->i]);
+		pipes->i++;
+	}
+	if (pipes->fd != -1000)
+		close(pipes->fd);
+	if (pipes->fd_out != -1000)
+		close(pipes->fd_out);
+	pipes->i = 0;
+	while (pipes->i <= pipes->num_pipes)
+	{
+		waitpid(-1, &g_exit_status, 0);
+		pipes->i++;
+	}
 }
 
-
-static char **redirect_input_no_pipes(t_shell *mini, t_args *node, char ***commands, char **envp)
+void	august(t_shell *mini, t_pipex *pipes, t_args *cur, char ***commands)
 {
-    int temp_fd;
-
-    temp_fd = 1;
-    if (node->infile != NULL)
-    {
-        //printf("111\n");
-        // if (node->redirection_quantity == 1)
-        //     temp_fd = open(node->infile, O_RDONLY);
-        if (node->redirection_quantity == 2)
-        {
-            screening_terminal(mini, node, temp_fd);
-            if (strcmp(node->command, "/usr/bin/cat") == 0)
-            {
-                temp_fd = open(".res", O_RDONLY);
-                if (commands[0][1] == NULL)
-                    commands[0][1] = ft_strdup(".res");
-                else if (commands[0][2] == NULL)
-                    commands[0][2] = ft_strdup(".res");
-            }
-        }
-        dup2(1, temp_fd);
-        close(temp_fd);
-        //printf("33333\n");
-    }
+	pipes->i = 0;
+	while (pipes->i <= pipes->num_pipes)
+	{
+		free_matrix(commands[pipes->i]);
+		pipes->i++;
+	}
+	free(commands);
+	free(pipes->fds);
+	free(pipes);
+	if (cur->next != NULL && ft_strncmp(cur->next->redirect, "||", 2) == 0
+		&& (WEXITSTATUS(g_exit_status) != 0 || mini->flag_status != 0))
+		execpipe(mini, cur->next->next);
+	if (cur->next != NULL && ft_strncmp(cur->next->redirect, "&&", 2) == 0
+		&& (WEXITSTATUS(g_exit_status) == 0))
+		execpipe(mini, cur->next->next);
 }
 
-void execpipe(t_shell *mini, t_args *node)
+t_args	*while_in_pipes(t_shell *mini, t_pipex *pipes, t_args *cur,
+		char ***commands)
 {
-    t_args *cur = node;
-    int pid;
-    int temp_fd;
-    int temp_fd_out;
-    int back_up;
-    char ***commands = NULL;
-    t_pipex *pipes;
+	int	pid;
 
-    pipes = malloc(sizeof(t_pipex));
-
-    init_pipexxx(pipes, mini, cur);
-    // Alloca memoria per le matrici dei comandi e i file descriptor delle pipe
-    commands = malloc((pipes->num_pipes + 1) * sizeof(char **));
-    
-
-
-    cur = node;
-    pipes->i = 0;
-    // Crea le pipe e le matrici dei comandi
-    while (pipes->i < pipes->num_pipes)
-    {
-        pipe(pipes->fds + (pipes->i * 2));
-        commands[pipes->i] = create_matri(cur);
-        cur = cur->next->next;
-        pipes->i++;
-    }
-
-    // Ultimo comando senza pipe successiva
-    commands[pipes->num_pipes] = create_matri(cur);
-    cur = node;
-
-    // Esegui i comandi collegati da pipe
-    pipes->i = 0;
-
-    while (pipes->i <= pipes->num_pipes)
-    {
-        if(check_builtin_presence(mini,cur->command)==0)
-            builtin_pipe(mini, pipes, cur);
-        else if(check_builtin_presence(mini,cur->command)>0)
-        {
-            pid = fork();
-            //printf("111111111111\n");
-
-            if (pid == 0)
-            {
-               // printf("\ngcook debugging\n%s\n", commands[pipes->i][0]);
-                //printf("porcodio il comando  é: %s\n", commands[i][0]);
-                if (pipes->i == 0 && pipes->num_pipes == 0 && cur->infile != NULL && cur->redirection_quantity == 2)
-                    redirect_input_no_pipes(mini, cur, commands, mini->envp);
-                if (pipes->i == 0 && pipes->num_pipes == 0 && cur->infile != NULL && cur->redirection_quantity == 1)
-                {
-                    temp_fd = open(cur->infile, O_RDONLY, 0777);
-                    if (dup2(temp_fd, 0) == -1)
-                        perror("Failed to redirect output to pipe");
-                    close(temp_fd);
-                }
-                if (pipes->i == 0 && pipes->num_pipes == 0 && cur->outfile != NULL)
-                {
-                    if (cur->redirection_quantity == 1)
-                        temp_fd_out = open(cur->outfile, O_TRUNC | O_CREAT | O_RDWR, 0777);
-                    else if (cur->redirection_quantity == 2)
-                        temp_fd_out = open(cur->outfile, O_APPEND | O_CREAT | O_RDWR, 0777);
-                    dup2(temp_fd_out, STDOUT_FILENO);
-                }
-                // Figlio: redireziona l'input e l'output in base alla posizione del comando
-                else if (pipes->i == 0 && pipes->i != pipes->num_pipes)
-                {
-                    //printf("culo\n%s, %s\nculo\n", cur->infile, cur->outfile);
-                    if (cur->infile != NULL)
-                    {
-                        if (cur->redirection_quantity == 1)
-                        {
-                            //printf("dioporco\n");
-                            temp_fd = open(cur->infile, O_RDONLY, 0777);
-                            dup2(temp_fd, 0);
-                        }
-                        else if (cur->redirection_quantity == 2)
-                        {
-                            screening_terminal(mini, cur, temp_fd);
-                            //printf("cur %d\n", strcmp(cur->command, "/usr/bin/cat"));
-                            //write(1, "TERMOSTATO", 10);
-                            if (strcmp(cur->command, "/usr/bin/cat") == 0)
-                            {
-                                
-                                //temp_fd = open("res", O_RDONLY);
-                                commands[0] = create_matri(cur);
-                                //for (int j = 0; commands[0][j]; j++)
-                            }
-                        }
-                    }
-                    if (cur->outfile != NULL)
-                    {
-                        //printf("CAZZO%d-----%d\n", i, pipes->num_pipes);
-                        if (cur->redirection_quantity == 1)
-                            temp_fd_out = open(cur->outfile, O_TRUNC | O_CREAT | O_RDWR, 0777);
-                        else if (cur->redirection_quantity == 2)
-                            temp_fd_out = open(cur->outfile, O_APPEND | O_CREAT | O_RDWR, 0777);
-                        dup2(temp_fd_out, 1);
-                    }
-                    // Primo comando: redireziona solo l'output
-                    if (cur->outfile == NULL)
-                    {
-                        if (dup2(pipes->fds[1], 1) == -1)
-                            perror("Failed to redirect output to pipe");
-                        //("111\n");
-                    }
-                }
-                else if (pipes->i == pipes->num_pipes && pipes->i != 0)
-                {
-                    //printf("culo\n");
-                    // printf("culo\n%s, %s\nculo\n", cur->infile, cur->outfile);
-                    if (cur->infile != NULL)
-                    {
-                        if (cur->redirection_quantity == 1)
-                        {
-                            temp_fd = open(cur->infile, O_RDONLY, 0777);
-                            dup2(temp_fd, 0);
-                        }
-                        else if (cur->redirection_quantity == 2)
-                        {
-                            screening_terminal(mini, cur, temp_fd);
-                            //printf("current %d\n", strcmp(cur->command, "/usr/bin/cat"));
-                            if (strcmp(cur->command, "/usr/bin/cat") == 0)
-                            {
-                                //temp_fd = open("res", O_RDONLY);
-                                commands[pipes->i] = create_matri(cur);
-                                //for (int j = 0; commands[0][j]; j++)
-                                //printf("mtr : %s", commands[0][j]);
-                            }
-                        }
-                    }
-                    else if (cur->infile == NULL)
-                    {
-                        if (dup2(pipes->fds[(pipes->i - 1) * 2], 0) == -1)
-                            perror("Failed to redirect input from pipe");
-                    }
-                    if (cur->outfile != NULL)
-                    {
-                        if (cur->redirection_quantity == 1)
-                            temp_fd_out = open(cur->outfile, O_TRUNC | O_CREAT | O_RDWR, 0777);
-                        else if (cur->redirection_quantity == 2)
-                            temp_fd_out = open(cur->outfile, O_APPEND | O_CREAT | O_RDWR, 0777);
-                        dup2(temp_fd_out, 1);
-                        //close(temp_fd_out);
-                        // printf("CAZZO%d-----%d\n", pipes->i, pipes->num_pipes);
-                    }
-                    // Ultimo comando: redireziona solo l'input
-                }
-                else if (pipes->i != 0 && pipes->i != pipes->num_pipes)
-                {
-                    // Comandi intermedi: redireziona sia l'input che l'output
-                    if (cur->infile != NULL)
-                    {
-                        if (cur->redirection_quantity == 1)
-                        {
-                            temp_fd = open(cur->infile, O_RDONLY, 0777);
-                            dup2(temp_fd, 0);
-                        }
-                        else if (cur->redirection_quantity == 2)
-                        {
-                            screening_terminal(mini, cur, temp_fd);
-                            //printf("current %d\n", strcmp(cur->command, "/usr/bin/cat"));
-                            if (strcmp(cur->command, "/usr/bin/cat") == 0)
-                            {
-                                //temp_fd = open("res", O_RDONLY);
-                                commands[pipes->i] = create_matri(cur);
-                                //for (int j = 0; commands[0][j]; j++)
-                                //printf("mtr : %s", commands[0][j]);
-                            }
-                        }
-                    }
-                    else if (cur->infile == NULL)
-                    {
-                        if (dup2(pipes->fds[(pipes->i - 1) * 2], 0) == -1)
-                            perror("Failed to redirect input from pipe");
-                    }
-                    if (cur->outfile != NULL)
-                    {
-                        if (cur->redirection_quantity == 1)
-                            temp_fd_out = open(cur->outfile, O_TRUNC | O_CREAT | O_RDWR, 0777);
-                        else if (cur->redirection_quantity == 2)
-                            temp_fd_out = open(cur->outfile, O_APPEND | O_CREAT | O_RDWR, 0777);
-                        dup2(temp_fd_out, 1);
-                        //printf("CAZZO%d-----%d\n", pipes->i, pipes->num_pipes);
-                    }
-                    else if (cur->outfile == NULL)
-                    {
-                        if (dup2(pipes->fds[pipes->i * 2 + 1], 1) == -1)
-                            perror("Failed to redirect output to pipe");
-                    }
-                }
-
-                // Chiudi tutti i file descriptor delle pipe
-                for (int j = 0; j < pipes->num_pipes * 2; j++)
-                    close(pipes->fds[j]);
-
-                execve(commands[pipes->i][0], commands[pipes->i], mini->envp);
-            }
-        }
-        if (pipes->i < pipes->num_pipes)
-            cur = cur->next->next;
-        pipes->i++;
-    }
-
-    // Chiudi tutti i file descriptor delle pipe nel processo padre
-    pipes-> i = 0;
-    while (pipes->i < pipes->num_pipes * 2)
-    {
-        close(pipes->fds[pipes->i]);
-        pipes->i++;
-    }
-    if (temp_fd)
-        close(temp_fd);
-    if (temp_fd_out)
-        close(temp_fd_out);
-    // Attendere tutti i processi figli
-    pipes->i = 0;
-    while (pipes->i <= pipes->num_pipes)
-    {
-        waitpid(-1, &g_exit_status, 0);
-        pipes->i++;
-    }
-    // Liberare la memoria
-    pipes->i = 0;
-    while (pipes->i <= pipes->num_pipes)
-    {
-        free_matrix(commands[pipes->i]);
-        pipes->i++;
-    }
-    free(commands);
-    free(pipes->fds);
-    if (cur->next != NULL && ft_strncmp(cur->next->redirect, "||", 2) == 0 && WEXITSTATUS(g_exit_status) == 1)
-        execpipe(mini, cur->next->next);
-    if (cur->next != NULL && ft_strncmp(cur->next->redirect, "&&", 2) == 0)
-        execpipe(mini, cur->next->next);
-        
+	while (++pipes->i <= pipes->num_pipes)
+	{
+		init_fd(pipes);
+		if (check_builtin_presence(mini, cur->command) == 0)
+			builtin_pipe(mini, pipes, cur);
+		else if (check_builtin_presence(mini, cur->command) > 0)
+		{
+			signal(SIGINT, sig_ign);
+			pid = fork();
+			if (pid == 0)
+			{
+				pipe_signal_utils(mini, pipes, cur, commands);
+				while (++pipes->j < pipes->num_pipes * 2)
+					close(pipes->fds[pipes->j]);
+				execve(commands[pipes->i][0], commands[pipes->i], mini->envp);
+			}
+		}
+		if (pipes->i < pipes->num_pipes)
+			cur = cur->next->next;
+	}
+	return (cur);
 }
-// un processo andato a buon fine ha exit status = 0.
-void screening_terminal(t_shell *mini, t_args *node, int temp_fd)
-{
-    char *buffer;
-    char *res;
 
-    res = ft_strdup("");
-    while (1)
-    {
-        buffer = get_next_line(0);
-        //printf("strncmp %d\n", ft_strncmp(buffer, node->infile, ft_strlen(node->infile)));
-        if (ft_strncmp(buffer, node->infile, ft_strlen(node->infile)) == 0)
-            break;
-        res = ft_strjoin(res, buffer, FREE, NO_FREE);
-    }
-    free(buffer);
-    free(node->infile);
-    node->infile = NULL;
-    if (strcmp(node->command, "/usr/bin/cat") == 0)
-    {
-        temp_fd = open(".dick", O_TRUNC | O_CREAT | O_RDWR);
-        ft_putstr_fd(res, temp_fd);
-        node->argument = ft_strdup(".dick");
-        close(temp_fd);
-    }
-    else
-        node->argument = ft_strdup(res);
-    free(res);
+void	execpipe(t_shell *mini, t_args *node)
+{
+	t_args	*cur;
+	char	***commands;
+	t_pipex	*pipes;
+
+	commands = NULL;
+	cur = node;
+	pipes = malloc(sizeof(t_pipex));
+	init_pipexxx(pipes, cur);
+	commands = malloc((pipes->num_pipes + 1) * sizeof(char **));
+	cur = node;
+	pipes->i = 0;
+	while (pipes->i < pipes->num_pipes)
+	{
+		pipe(pipes->fds + (pipes->i * 2));
+		commands[pipes->i] = create_matri(cur);
+		cur = cur->next->next;
+		pipes->i++;
+	}
+	commands[pipes->num_pipes] = create_matri(cur);
+	cur = node;
+	pipes->i = -1;
+	cur = while_in_pipes(mini, pipes, cur, commands);
+	close_n_wait(pipes);
+	august(mini, pipes, cur, commands);
+}
+
+void	screening_terminal(t_args *node, int temp_fd)
+{
+	char	*buffer;
+	char	*res;
+
+	res = ft_strdup("");
+	while (1)
+	{
+		buffer = get_next_line(0);
+		if (ft_strncmp(buffer, node->infile, ft_strlen(node->infile)) == 0)
+			break ;
+		res = ft_strjoin(res, buffer, FREE, NO_FREE);
+	}
+	free(buffer);
+	free(node->infile);
+	node->infile = NULL;
+	if (ft_strcmp(node->command, "/usr/bin/cat") == 0)
+	{
+		temp_fd = open(".fa", O_TRUNC | O_CREAT | O_RDWR, 0777);
+		ft_putstr_fd(res, temp_fd);
+		free(node->argument);
+		node->argument = ft_strdup(".fa");
+		close(temp_fd);
+	}
+	else
+		node->argument = ft_strdup(res);
+	free(res);
 }
